@@ -21,15 +21,15 @@ SetupMouseSpotlight() {
 
 InitializeSpotlightGUI() { 
     global CursorSpotlightHwnd, SETTINGS, CursorSpotlightDiameter
-    if (SETTINGS.cursorSpotlight.enabled == true) { 
-        CursorSpotlightDiameter := SETTINGS.cursorSpotlight.spotlightDiameter
-        spotlightOuterRingWidth := SETTINGS.cursorSpotlight.spotlightOuterRingWidth
+    if (SETTINGS["cursorSpotlight"]["enabled"] == true) { 
+        CursorSpotlightDiameter := SETTINGS["cursorSpotlight"]["spotlightDiameter"]
+        spotlightOuterRingWidth := SETTINGS["cursorSpotlight"]["spotlightOuterRingWidth"]
         
         CursorSpotlightWindow := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20")
-        CursorSpotlightWindow.BackColor := SETTINGS.cursorSpotlight.spotlightColor
+        CursorSpotlightWindow.BackColor := SETTINGS["cursorSpotlight"]["spotlightColor"]
         CursorSpotlightHwnd := CursorSpotlightWindow.Hwnd
         CursorSpotlightWindow.Show("x0 y0 w" CursorSpotlightDiameter " h" CursorSpotlightDiameter " NA")
-        WinSetTransparent SETTINGS.cursorSpotlight.spotlightOpacity, "ahk_id " CursorSpotlightHwnd
+        WinSetTransparent SETTINGS["cursorSpotlight"]["spotlightOpacity"], "ahk_id " CursorSpotlightHwnd
         
         ; Create a ring region to highlight the cursor
         finalRegion := DllCall("CreateEllipticRgn", "Int", 0, "Int", 0, "Int", CursorSpotlightDiameter, "Int", CursorSpotlightDiameter)
@@ -46,7 +46,7 @@ InitializeSpotlightGUI() {
 
 DrawSpotlight() {            
     ; SETTINGS.cursorSpotlight.enabled can be changed by other script such as Annotation.ahk
-    if (SETTINGS.cursorSpotlight.enabled == true) {
+    if (SETTINGS["cursorSpotlight"]["enabled"] == true) {
         MouseGetPos(&X, &Y)
         X -= CursorSpotlightDiameter / 2
         Y -= CursorSpotlightDiameter / 2
