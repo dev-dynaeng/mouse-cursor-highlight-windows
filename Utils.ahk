@@ -31,10 +31,12 @@ ReadConfigFile(configFileName) {
         }
         
         result[oneSection] := Map()
-        for i := 1; i <= items.Length; i += 2 {
+        i := 1
+        while i <= items.Length {
             if (i+1 <= items.Length) {
                 result[oneSection][items[i]] := items[i+1]
             }
+            i += 2
         }
     }
     Return result
