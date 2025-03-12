@@ -36,10 +36,9 @@ InitializeKeyStrokeOSDGUI() {
 
 AddHotkeysForKeyStrokeOSD() {
     ProcessKeyStrokeFunc := ProcessKeyStroke
-    SetFormat "Integer", "hex"
     start := 0 
     Loop 227 {
-        key := GetKeyName("vk" start++)
+        key := GetKeyName("vk" Format("{:x}", start++))
         if (key != "")
             Hotkey "~*" key, ProcessKeyStrokeFunc
     }
@@ -47,8 +46,6 @@ AddHotkeysForKeyStrokeOSD() {
     for _, key in StrSplit("Up,Down,Left,Right,End,Home,PgUp,PgDn,Insert,NumpadEnter,#,^,!,+", ",") {
         Hotkey "~*" key, ProcessKeyStrokeFunc
     }
-
-    SetFormat "Integer", "dec"
 
     for _, char in StrSplit("!@#$%^&*()_+:<>{}|?~" Chr(34)) {
         Hotkey "~+" char, ProcessKeyStrokeFunc
