@@ -12,6 +12,14 @@ CoordMode "Mouse", "Screen"
 
 global ClickEvents := []
 global IsStillDrawingRipples := false
+global RippleEventParams := Map()
+global CurrentRippleDiameter := 0
+global CurrentRippleAlpha := 0
+global TotalCountOfRipples := 0
+global RippleAlphaStep := 0
+global AlreadyDrawnRipples := 0
+global RippleWindowPositionX := 0
+global RippleWindowPositionY := 0
 
 SetupMouseClickRipple() {
     global SETTINGS, ClickRippleBitMapWidth, ClickRippleWindowHwnd, ClickRippleHbm
@@ -95,6 +103,9 @@ ProcessMouseClick(*) {
 CheckToDrawNextClickEvent() { 
     global IsStillDrawingRipples, ClickEvents, ClickRippleBitMapWidth, ClickRippleWindowHwnd
     global ClickRippleHdc, ClickRippleGraphics
+    global RippleEventParams, CurrentRippleDiameter, CurrentRippleAlpha
+    global TotalCountOfRipples, RippleAlphaStep, RippleWindowPositionX, RippleWindowPositionY
+    global AlreadyDrawnRipples
     
     if (IsStillDrawingRipples || ClickEvents.Length == 0) {
         Return
