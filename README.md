@@ -1,6 +1,19 @@
 # Check the following video for tutorial on how to use this script
 [![Tutorial](https://i.imgur.com/sxbuLpc.jpeg)](https://youtu.be/lpEFMcIbyjg "Tutorial")
 
+## AutoHotkey 2.0 Compatibility
+
+This version of the script has been updated to work with AutoHotkey 2.0. If you're looking for the AutoHotkey 1.0 version, please check the v1.0 branch or tag.
+
+### Key Changes in the AHK 2.0 Version:
+- All scripts now use the `#Requires AutoHotkey v2.0` directive
+- Map objects (settings) are now accessed using bracket notation `Settings["section"]["property"]`
+- Function calls now use parentheses syntax: `FunctionName(param1, param2)`
+- GUI code has been updated to use the v2.0 object-based syntax
+- Global variables are properly declared in function scope
+- Variable references for ByRef parameters use the '&' prefix
+
+## About This Script
 
 This open source code is a handy AutoHotkey script designed for presenters and teachers who need to highlight their mouse pointer. The script has these features: ***highlighting your mouse cursor***, ***keystroke visualization*** and ***on-screen annotation***:
 
@@ -86,8 +99,6 @@ Go back to the original folder of this program and double click "Start.ahk" to l
 
 <br/>
 <br/>
-
-
 
 # Buy Me a Coffee?
 ### Donate via [PayPal](https://www.paypal.com/donate/?business=JY46S54HME9LQ&no_recurring=0&currency_code=USD)
