@@ -1,7 +1,7 @@
 ReadConfigFile(configFileName)
 {
 	result := {}
-	IniRead, allSections, %configFileName%
+	IniRead, allSections, %configFileName%, ,  ; Fixed by adding empty section and key parameters
 	allSections := StrSplit(allSections, "`n", "`r")
 	for index, oneSection in allSections {
 		if (oneSection = "comment")
