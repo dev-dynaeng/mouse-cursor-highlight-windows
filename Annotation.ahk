@@ -33,6 +33,9 @@ global RectangleAnnotationTopLeftPointX, RectangleAnnotationTopLeftPointY
 global RectangleAnnotationWidth, RectangleAnnotationHeight
 
 GetDimensionAcrossAllMonitors() {
+    global MinXOfAllMonitors, MinYOfAllMonitors, MaxXOfAllMonitors, MaxYOfAllMonitors
+    global WidthAcrossAllMonitors, HeightAcrossAllMonitors
+    
     TotalCountOfMonitors := MonitorGetCount()
     MinXOfAllMonitors := 999999999
     MinYOfAllMonitors := 999999999
@@ -60,6 +63,12 @@ GetDimensionAcrossAllMonitors() {
 }
 
 CreateAnnotationCanvasWindow() {
+    global MinXOfAllMonitors, MinYOfAllMonitors, WidthAcrossAllMonitors, HeightAcrossAllMonitors
+    global AnnotationCanvasWindowHwnd, AnnotationCanvasWindowHbm
+    global AnnotationCanvasWindowHdc, AnnotationCanvasWindowGraphics
+    global LineAnnotationPen, RectangleAnnotationPen
+    global CursorSpotlightHwnd, TheKeyStrokeOSDHwnd
+    
     GetDimensionAcrossAllMonitors()
     ; Start gdi+
     if !pToken := Gdip_Startup() {
@@ -130,6 +139,11 @@ CreateAnnotationCanvasWindow() {
 }
 
 CreateAnnotationTemporaryShapeWindow() {
+    global MinXOfAllMonitors, MinYOfAllMonitors, WidthAcrossAllMonitors, HeightAcrossAllMonitors
+    global AnnotationTemporaryShapeWindowHwnd, AnnotationTemporaryShapeWindowHbm
+    global AnnotationTemporaryShapeWindowHdc, AnnotationTemporaryShapeWindowGraphics
+    global LineAnnotationPenForTemporaryShape
+    
     ; Start gdi+
     if !pToken := Gdip_Startup() {
         MsgBox "gdiplus error!`nGdiplus failed to start. Please ensure you have gdiplus on your system", 48
@@ -248,6 +262,13 @@ SwitchAnnotationDrawingMode(modeToToggle) {
 }
 
 DRAW_LINE_ANNOTATION() { 
+    global MinXOfAllMonitors, MinYOfAllMonitors, WidthAcrossAllMonitors, HeightAcrossAllMonitors
+    global AnnotationTemporaryShapeWindowHwnd, AnnotationTemporaryShapeWindowGraphics
+    global AnnotationCanvasWindowHwnd, AnnotationCanvasWindowGraphics, AnnotationCanvasWindowHdc, AnnotationTemporaryShapeWindowHdc
+    global SecondPreviousLineAnnotationMousePositionX, SecondPreviousLineAnnotationMousePositionY
+    global PreviousLineAnnotationMousePositionX, PreviousLineAnnotationMousePositionY
+    global HasFirstLineAnnotationSegmentBeenDrawn, AllPointsInLineAnnotation
+    global LineAnnotationPen, LineAnnotationPenForTemporaryShape
     if (GetKeyState("LButton", "P")) { 
         MouseGetPos(&LineAnnotationMousePositionX, &LineAnnotationMousePositionY)
         ; The mouse position is in the screen's coordinate, and it can be a negative value in a multiple-monitor setup. 
@@ -310,6 +331,13 @@ DRAW_LINE_ANNOTATION() {
 }
 
 DRAW_RECTANGLE_ANNOTATION() { 
+    global MinXOfAllMonitors, MinYOfAllMonitors, WidthAcrossAllMonitors, HeightAcrossAllMonitors
+    global AnnotationTemporaryShapeWindowHwnd, AnnotationTemporaryShapeWindowGraphics
+    global AnnotationCanvasWindowHwnd, AnnotationCanvasWindowGraphics, AnnotationCanvasWindowHdc, AnnotationTemporaryShapeWindowHdc
+    global RectangleAnnotationStartPointX, RectangleAnnotationStartPointY
+    global RectangleAnnotationTopLeftPointX, RectangleAnnotationTopLeftPointY
+    global RectangleAnnotationWidth, RectangleAnnotationHeight
+    global RectangleAnnotationPen
     MouseGetPos(&RectangleAnnotationMousePositionX, &RectangleAnnotationMousePositionY)
     RectangleAnnotationMousePositionX := RectangleAnnotationMousePositionX - MinXOfAllMonitors
     RectangleAnnotationMousePositionY := RectangleAnnotationMousePositionY - MinYOfAllMonitors
