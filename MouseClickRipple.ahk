@@ -28,14 +28,14 @@ SetupMouseClickRipple() {
     SETTINGS := ReadConfigFile("settings.ini") 
     InitializeClickRippleGUI() 
 
-    if (SETTINGS.cursorLeftClickRippleEffect.enabled = true) { 
-        Hotkey "~*LButton", ProcessMouseClick
+    if (SETTINGS["cursorLeftClickRippleEffect"]["enabled"] = true) { 
+        Hotkey("~*LButton", ProcessMouseClick)
     }
-    if (SETTINGS.cursorRightClickRippleEffect.enabled = true) {
-        Hotkey "~*RButton", ProcessMouseClick
+    if (SETTINGS["cursorRightClickRippleEffect"]["enabled"] = true) {
+        Hotkey("~*RButton", ProcessMouseClick)
     }
-    if (SETTINGS.cursorMiddleClickRippleEffect.enabled = true) {
-        Hotkey "~*MButton", ProcessMouseClick
+    if (SETTINGS["cursorMiddleClickRippleEffect"]["enabled"] = true) {
+        Hotkey("~*MButton", ProcessMouseClick)
     }
 }
 
@@ -44,12 +44,12 @@ InitializeClickRippleGUI() {
     global ClickRippleHdc, ClickRippleGraphics
     
     ; Calculate the width/height of the bitmap we are going to create
-    ClickRippleBitMapWidth := Max(SETTINGS.cursorLeftClickRippleEffect.rippleDiameterStart
-        , SETTINGS.cursorLeftClickRippleEffect.rippleDiameterEnd
-        , SETTINGS.cursorMiddleClickRippleEffect.rippleDiameterStart
-        , SETTINGS.cursorMiddleClickRippleEffect.rippleDiameterEnd
-        , SETTINGS.cursorRightClickRippleEffect.rippleDiameterStart
-        , SETTINGS.cursorRightClickRippleEffect.rippleDiameterEnd) + 2
+    ClickRippleBitMapWidth := Max(SETTINGS["cursorLeftClickRippleEffect"]["rippleDiameterStart"]
+        , SETTINGS["cursorLeftClickRippleEffect"]["rippleDiameterEnd"]
+        , SETTINGS["cursorMiddleClickRippleEffect"]["rippleDiameterStart"]
+        , SETTINGS["cursorMiddleClickRippleEffect"]["rippleDiameterEnd"]
+        , SETTINGS["cursorRightClickRippleEffect"]["rippleDiameterStart"]
+        , SETTINGS["cursorRightClickRippleEffect"]["rippleDiameterEnd"]) + 2
 
     ; Start gdi+    
     if (!Gdip_Startup()) {
@@ -85,17 +85,17 @@ ProcessMouseClick(*) {
     local params
     
     if (InStr(A_ThisHotkey, "LButton")) {
-        params := SETTINGS.cursorLeftClickRippleEffect 
+        params := SETTINGS["cursorLeftClickRippleEffect"]
     } else if (InStr(A_ThisHotkey, "MButton")) {
-        params := SETTINGS.cursorMiddleClickRippleEffect
+        params := SETTINGS["cursorMiddleClickRippleEffect"]
     } else if (InStr(A_ThisHotkey, "RButton")) { 
-        params := SETTINGS.cursorRightClickRippleEffect 
+        params := SETTINGS["cursorRightClickRippleEffect"]
     }
 
     ; Add an event to the event array and call the CheckToDrawNextClickEvent function.
     MouseGetPos(&rippleMousePositionX, &rippleMousePositionY)
-    params.rippleMousePositionX := rippleMousePositionX
-    params.rippleMousePositionY := rippleMousePositionY
+    params["rippleMousePositionX"] := rippleMousePositionX
+    params["rippleMousePositionY"] := rippleMousePositionY
     ClickEvents.Push(params)
     CheckToDrawNextClickEvent()
 }
@@ -115,19 +115,19 @@ CheckToDrawNextClickEvent() {
     RippleEventParams := ClickEvents[1]
     ClickEvents.RemoveAt(1)
     
-    if (RippleEventParams.playClickSound == true) {
-        SoundPlay A_ScriptDir "\MouseClickSound.wav"
+    if (RippleEventParams["playClickSound"] == true) {
+        SoundPlay(A_ScriptDir "\MouseClickSound.wav")
     }
 
     IsStillDrawingRipples := true
 
-    CurrentRippleDiameter := RippleEventParams.rippleDiameterStart
-    CurrentRippleAlpha := RippleEventParams.rippleAlphaStart
-    TotalCountOfRipples := Abs(Round((RippleEventParams.rippleDiameterEnd - RippleEventParams.rippleDiameterStart) / RippleEventParams.rippleDiameterStep))
-    RippleAlphaStep := Round((RippleEventParams.rippleAlphaEnd - RippleEventParams.rippleAlphaStart) / TotalCountOfRipples)
+    CurrentRippleDiameter := RippleEventParams["rippleDiameterStart"]
+    CurrentRippleAlpha := RippleEventParams["rippleAlphaStart"]
+    TotalCountOfRipples := Abs(Round((RippleEventParams["rippleDiameterEnd"] - RippleEventParams["rippleDiameterStart"]) / RippleEventParams["rippleDiameterStep"]))
+    RippleAlphaStep := Round((RippleEventParams["rippleAlphaEnd"] - RippleEventParams["rippleAlphaStart"]) / TotalCountOfRipples)
 
-    RippleWindowPositionX := RippleEventParams.rippleMousePositionX - Round(ClickRippleBitMapWidth/2)
-    RippleWindowPositionY := RippleEventParams.rippleMousePositionY - Round(ClickRippleBitMapWidth/2)
+    RippleWindowPositionX := RippleEventParams["rippleMousePositionX"] - Round(ClickRippleBitMapWidth/2)
+    RippleWindowPositionY := RippleEventParams["rippleMousePositionY"] - Round(ClickRippleBitMapWidth/2)
 
     AlreadyDrawnRipples := 0    
     SetTimer DRAW_RIPPLE, RippleEventParams.rippleRefreshInterval
@@ -142,8 +142,8 @@ DRAW_RIPPLE() {
     ; Clear the previous drawing
     Gdip_GraphicsClear(ClickRippleGraphics, 0)
     ; Create a pen with ARGB (ARGB = Transparency, red, green, blue) to draw a circle
-    local alphaRGB := CurrentRippleAlpha << 24 | RippleEventParams.rippleColor
-    local pPen := Gdip_CreatePen(alphaRGB, RippleEventParams.rippleLineWidth)
+    local alphaRGB := CurrentRippleAlpha << 24 | RippleEventParams["rippleColor"]
+    local pPen := Gdip_CreatePen(alphaRGB, RippleEventParams["rippleLineWidth"])
 
     ; Draw a circle into the graphics of the bitmap using the pen created
     Gdip_DrawEllipse(ClickRippleGraphics
@@ -157,10 +157,10 @@ DRAW_RIPPLE() {
     
     ; Calculate necessary values to prepare for drawing the next circle
     CurrentRippleAlpha := CurrentRippleAlpha + RippleAlphaStep
-    if (RippleEventParams.rippleDiameterEnd > RippleEventParams.rippleDiameterStart) {
-        CurrentRippleDiameter := CurrentRippleDiameter + Abs(RippleEventParams.rippleDiameterStep)
+    if (RippleEventParams["rippleDiameterEnd"] > RippleEventParams["rippleDiameterStart"]) {
+        CurrentRippleDiameter := CurrentRippleDiameter + Abs(RippleEventParams["rippleDiameterStep"])
     } else {
-        CurrentRippleDiameter := CurrentRippleDiameter - Abs(RippleEventParams.rippleDiameterStep)
+        CurrentRippleDiameter := CurrentRippleDiameter - Abs(RippleEventParams["rippleDiameterStep"])
     }
     AlreadyDrawnRipples++
     if (AlreadyDrawnRipples >= TotalCountOfRipples) {

@@ -20,14 +20,14 @@ SetupMouseClickRipple() {
     SETTINGS := ReadConfigFile("settings.ini") 
     InitializeClickRippleGUI() 
 
-    if (SETTINGS.cursorLeftClickRippleEffect.enabled = true) { 
-        Hotkey "~*LButton", ProcessMouseClick
+    if (SETTINGS["cursorLeftClickRippleEffect"]["enabled"] = true) { 
+        Hotkey("~*LButton", ProcessMouseClick)
     }
-    if (SETTINGS.cursorRightClickRippleEffect.enabled = true) {
-        Hotkey "~*RButton", ProcessMouseClick
+    if (SETTINGS["cursorRightClickRippleEffect"]["enabled"] = true) {
+        Hotkey("~*RButton", ProcessMouseClick)
     }
-    if (SETTINGS.cursorMiddleClickRippleEffect.enabled = true) {
-        Hotkey "~*MButton", ProcessMouseClick
+    if (SETTINGS["cursorMiddleClickRippleEffect"]["enabled"] = true) {
+        Hotkey("~*MButton", ProcessMouseClick)
     }
 }
 
@@ -37,12 +37,12 @@ InitializeClickRippleGUI() {
     MouseClickRippleWindow := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20") ;+E0x20 click thru    
     ClickRippleWindowHwnd := MouseClickRippleWindow.Hwnd
     
-    ClickRippleWindowWidth := Max(SETTINGS.cursorLeftClickRippleEffect.rippleDiameterStart
-        , SETTINGS.cursorLeftClickRippleEffect.rippleDiameterEnd
-        , SETTINGS.cursorMiddleClickRippleEffect.rippleDiameterStart
-        , SETTINGS.cursorMiddleClickRippleEffect.rippleDiameterEnd
-        , SETTINGS.cursorRightClickRippleEffect.rippleDiameterStart
-        , SETTINGS.cursorRightClickRippleEffect.rippleDiameterEnd) + 2
+    ClickRippleWindowWidth := Max(SETTINGS["cursorLeftClickRippleEffect"]["rippleDiameterStart"]
+        , SETTINGS["cursorLeftClickRippleEffect"]["rippleDiameterEnd"]
+        , SETTINGS["cursorMiddleClickRippleEffect"]["rippleDiameterStart"]
+        , SETTINGS["cursorMiddleClickRippleEffect"]["rippleDiameterEnd"]
+        , SETTINGS["cursorRightClickRippleEffect"]["rippleDiameterStart"]
+        , SETTINGS["cursorRightClickRippleEffect"]["rippleDiameterEnd"]) + 2
 
     Return
 }
@@ -52,18 +52,18 @@ ProcessMouseClick(*) {
     local params
     
     if (InStr(A_ThisHotkey, "LButton")) {
-        params := SETTINGS.cursorLeftClickRippleEffect 
+        params := SETTINGS["cursorLeftClickRippleEffect"]
     } else if (InStr(A_ThisHotkey, "MButton")) {
-        params := SETTINGS.cursorMiddleClickRippleEffect 
+        params := SETTINGS["cursorMiddleClickRippleEffect"]
     } else if (InStr(A_ThisHotkey, "RButton")) { 
-        params := SETTINGS.cursorRightClickRippleEffect 
+        params := SETTINGS["cursorRightClickRippleEffect"]
     }
     
     ; Add an event to the event array and call the DrawRipple function.
     MouseGetPos(&mousePositionX, &mousePositionY)
 
-    params.mousePositionX := mousePositionX
-    params.mousePositionY := mousePositionY
+    params["mousePositionX"] := mousePositionX
+    params["mousePositionY"] := mousePositionY
     ClickEvents.Push(params)
     CheckToDrawNextClickEvent()
 }
@@ -79,21 +79,21 @@ CheckToDrawNextClickEvent() {
     global RippleEventParams := ClickEvents[1]
     ClickEvents.RemoveAt(1)
 
-    if (RippleEventParams.playClickSound == true) {
-        SoundPlay A_ScriptDir "\MouseClickSound.wav"
+    if (RippleEventParams["playClickSound"] == true) {
+        SoundPlay(A_ScriptDir "\MouseClickSound.wav")
     }
 
     IsStillDrawingRipples := true
-    global CurrentRippleDiameter := RippleEventParams.rippleDiameterStart
-    global CurrentRippleAlpha := RippleEventParams.rippleAlphaStart
-    global TotalCountOfRipples := Abs(Round((RippleEventParams.rippleDiameterEnd - RippleEventParams.rippleDiameterStart) / RippleEventParams.rippleDiameterStep))
-    global RippleAlphaStep := Round((RippleEventParams.rippleAlphaEnd - RippleEventParams.rippleAlphaStart) / TotalCountOfRipples)
+    global CurrentRippleDiameter := RippleEventParams["rippleDiameterStart"]
+    global CurrentRippleAlpha := RippleEventParams["rippleAlphaStart"]
+    global TotalCountOfRipples := Abs(Round((RippleEventParams["rippleDiameterEnd"] - RippleEventParams["rippleDiameterStart"]) / RippleEventParams["rippleDiameterStep"]))
+    global RippleAlphaStep := Round((RippleEventParams["rippleAlphaEnd"] - RippleEventParams["rippleAlphaStart"]) / TotalCountOfRipples)
 
-    global RippleWindowPositionX := RippleEventParams.mousePositionX - Round(ClickRippleWindowWidth/2)
-    global RippleWindowPositionY := RippleEventParams.mousePositionY - Round(ClickRippleWindowWidth/2) 
+    global RippleWindowPositionX := RippleEventParams["mousePositionX"] - Round(ClickRippleWindowWidth/2)
+    global RippleWindowPositionY := RippleEventParams["mousePositionY"] - Round(ClickRippleWindowWidth/2) 
     
     MouseClickRippleWindow := Gui("MouseClickRippleWindow")
-    MouseClickRippleWindow.BackColor := RippleEventParams.rippleColor
+    MouseClickRippleWindow.BackColor := RippleEventParams["rippleColor"]
     MouseClickRippleWindow.Show("x" RippleWindowPositionX " y" RippleWindowPositionY " w" ClickRippleWindowWidth " h" ClickRippleWindowWidth " NoActivate")
     
     global AlreadyDrawnRipples := 0 
@@ -106,7 +106,7 @@ DRAW_RIPPLE() {
     global ClickRippleWindowWidth, ClickRippleWindowHwnd
     global IsStillDrawingRipples, AlreadyCreatedRegionForRipples
     
-    local regionKey := RippleEventParams.rippleColor "," CurrentRippleDiameter
+    local regionKey := RippleEventParams["rippleColor"] "," CurrentRippleDiameter
     local finalRegion
     
     if (AlreadyCreatedRegionForRipples.Has(regionKey)) {
@@ -116,10 +116,10 @@ DRAW_RIPPLE() {
         local outerRegionTopLeftY := Round((ClickRippleWindowWidth-CurrentRippleDiameter)/2)
         local outerRegionBottomRightX := outerRegionTopLeftX + CurrentRippleDiameter
         local outerRegionBottomRightY := outerRegionTopLeftY + CurrentRippleDiameter
-        local innerRegionTopLeftX := outerRegionTopLeftX + RippleEventParams.rippleLineWidth
-        local innerRegionTopLeftY := outerRegionTopLeftY + RippleEventParams.rippleLineWidth
-        local innerRegionBottomRightX := outerRegionBottomRightX - RippleEventParams.rippleLineWidth
-        local innerRegionBottomRightY := outerRegionBottomRightY - RippleEventParams.rippleLineWidth 
+        local innerRegionTopLeftX := outerRegionTopLeftX + RippleEventParams["rippleLineWidth"]
+        local innerRegionTopLeftY := outerRegionTopLeftY + RippleEventParams["rippleLineWidth"]
+        local innerRegionBottomRightX := outerRegionBottomRightX - RippleEventParams["rippleLineWidth"]
+        local innerRegionBottomRightY := outerRegionBottomRightY - RippleEventParams["rippleLineWidth"] 
         
         finalRegion := DllCall("CreateEllipticRgn", "Int", outerRegionTopLeftX, "Int", outerRegionTopLeftY, "Int", outerRegionBottomRightX, "Int", outerRegionBottomRightY)
         local inner := DllCall("CreateEllipticRgn", "Int", innerRegionTopLeftX, "Int", innerRegionTopLeftY, "Int", innerRegionBottomRightX, "Int", innerRegionBottomRightY)
@@ -137,10 +137,10 @@ DRAW_RIPPLE() {
     AlreadyCreatedRegionForRipples[regionKey] := clonedRegion 
     
     CurrentRippleAlpha := CurrentRippleAlpha + RippleAlphaStep        
-    if (RippleEventParams.rippleDiameterEnd > RippleEventParams.rippleDiameterStart) {
-        CurrentRippleDiameter := CurrentRippleDiameter + Abs(RippleEventParams.rippleDiameterStep)
+    if (RippleEventParams["rippleDiameterEnd"] > RippleEventParams["rippleDiameterStart"]) {
+        CurrentRippleDiameter := CurrentRippleDiameter + Abs(RippleEventParams["rippleDiameterStep"])
     } else {
-        CurrentRippleDiameter := CurrentRippleDiameter - Abs(RippleEventParams.rippleDiameterStep)
+        CurrentRippleDiameter := CurrentRippleDiameter - Abs(RippleEventParams["rippleDiameterStep"])
     }
     
     AlreadyDrawnRipples++
