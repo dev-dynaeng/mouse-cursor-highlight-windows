@@ -6,8 +6,8 @@
 
 A_MaxHotkeysPerInterval := 100
 
-SetBatchLines -1
-SetWinDelay -1
+SetBatchLines "-1"
+SetWinDelay "-1"
 CoordMode "Mouse", "Screen"
 
 global ClickEvents := []
