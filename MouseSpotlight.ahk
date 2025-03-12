@@ -28,8 +28,10 @@ InitializeSpotlightGUI() {
         CursorSpotlightWindow := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20")
         CursorSpotlightWindow.BackColor := SETTINGS["cursorSpotlight"]["spotlightColor"]
         CursorSpotlightHwnd := CursorSpotlightWindow.Hwnd
+        
+        ; First show the window, then set transparency
         CursorSpotlightWindow.Show("x0 y0 w" CursorSpotlightDiameter " h" CursorSpotlightDiameter " NA")
-        WinSetTransparent SETTINGS["cursorSpotlight"]["spotlightOpacity"], "ahk_id " CursorSpotlightHwnd
+        WinSetTransparent(SETTINGS["cursorSpotlight"]["spotlightOpacity"], "ahk_id " CursorSpotlightHwnd)
         
         ; Create a ring region to highlight the cursor
         finalRegion := DllCall("CreateEllipticRgn", "Int", 0, "Int", 0, "Int", CursorSpotlightDiameter, "Int", CursorSpotlightDiameter)
@@ -50,10 +52,10 @@ DrawSpotlight() {
         MouseGetPos(&X, &Y)
         X -= CursorSpotlightDiameter / 2
         Y -= CursorSpotlightDiameter / 2
-        WinMove X, Y, , , "ahk_id " CursorSpotlightHwnd
-        WinSetAlwaysOnTop true, "ahk_id " CursorSpotlightHwnd
+        WinMove(X, Y, , , "ahk_id " CursorSpotlightHwnd)
+        WinSetAlwaysOnTop(true, "ahk_id " CursorSpotlightHwnd)
     } else {
-        WinMove -999999999, -999999999, , , "ahk_id " CursorSpotlightHwnd
+        WinMove(-999999999, -999999999, , , "ahk_id " CursorSpotlightHwnd)
     }
 }
 

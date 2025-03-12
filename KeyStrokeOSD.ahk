@@ -28,9 +28,11 @@ InitializeKeyStrokeOSDGUI() {
     KeyStrokeOSDWindow.SetFont("s" SETTINGS["keyStrokeOSD"]["osdFontSize"], SETTINGS["keyStrokeOSD"]["osdFontFamily"])
     KeyStrokeOSDWindow.Add("Text", "x0 y0 center vKeyStrokeOSDTextControl c" SETTINGS["keyStrokeOSD"]["osdFontColor"] " w" SETTINGS["keyStrokeOSD"]["osdWindowWidth"] " h" SETTINGS["keyStrokeOSD"]["osdWindowHeight"])
     TheKeyStrokeOSDHwnd := KeyStrokeOSDWindow.Hwnd
-    WinSetTransparent SETTINGS["keyStrokeOSD"]["osdWindowOpacity"], "ahk_id " TheKeyStrokeOSDHwnd
+    
+    ; First show the window, then set transparency
     KeyStrokeOSDWindow.Show("x" SETTINGS["keyStrokeOSD"]["osdWindowPositionX"] " y" SETTINGS["keyStrokeOSD"]["osdWindowPositionY"] " w" SETTINGS["keyStrokeOSD"]["osdWindowWidth"] " h" SETTINGS["keyStrokeOSD"]["osdWindowHeight"] " NoActivate")
-    WinHide "ahk_id " TheKeyStrokeOSDHwnd 
+    WinSetTransparent(SETTINGS["keyStrokeOSD"]["osdWindowOpacity"], "ahk_id " TheKeyStrokeOSDHwnd)
+    WinHide("ahk_id " TheKeyStrokeOSDHwnd)
     Return
 }
 
@@ -148,22 +150,22 @@ ProcessKeyStroke(*) {
     }
     
     if (shouldDisplay) { 
-        SetTimer HideOSDWindow, 0
-        WinShow "ahk_id " TheKeyStrokeOSDHwnd
+        SetTimer(HideOSDWindow, 0)
+        WinShow("ahk_id " TheKeyStrokeOSDHwnd)
         KeyStrokeOSDWindow := Gui("KeyStrokeOSDWindow")
         KeyStrokeOSDWindow["KeyStrokeOSDTextControl"].Text := textToDisplay
         PreviouseDisplayedText := textToDisplay
-        SetTimer HideOSDWindow, SETTINGS["keyStrokeOSD"]["osdDuration"]
+        SetTimer(HideOSDWindow, SETTINGS["keyStrokeOSD"]["osdDuration"])
     }
 }
 
 HideOSDWindow() {
     global PressedModifierKeys, PreviouseDisplayedText, PreviouseHotkeyText, TheKeyStrokeOSDHwnd
-    SetTimer HideOSDWindow, 0
+    SetTimer(HideOSDWindow, 0)
     PressedModifierKeys := []
     PreviouseDisplayedText := ""
     PreviouseHotkeyText := ""
-    WinHide "ahk_id " TheKeyStrokeOSDHwnd
+    WinHide("ahk_id " TheKeyStrokeOSDHwnd)
 }
 
 CheckAndUpdatePressedModifierKeys(PressedModifierKeys) {
