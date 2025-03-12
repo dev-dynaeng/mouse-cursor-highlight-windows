@@ -97,7 +97,7 @@ CheckToDrawNextClickEvent() {
     MouseClickRippleWindow.Show("x" RippleWindowPositionX " y" RippleWindowPositionY " w" ClickRippleWindowWidth " h" ClickRippleWindowWidth " NoActivate")
     
     global AlreadyDrawnRipples := 0 
-    SetTimer DRAW_RIPPLE, RippleEventParams.rippleRefreshInterval
+    SetTimer(DRAW_RIPPLE, RippleEventParams["rippleRefreshInterval"])
 }
 
 DRAW_RIPPLE() {
@@ -146,7 +146,7 @@ DRAW_RIPPLE() {
     AlreadyDrawnRipples++
     if (AlreadyDrawnRipples >= TotalCountOfRipples) {
         IsStillDrawingRipples := false
-        SetTimer DRAW_RIPPLE, 0
+        SetTimer(DRAW_RIPPLE, 0)
         MouseClickRippleWindow := Gui("MouseClickRippleWindow")
         MouseClickRippleWindow.Hide()
         ; Trigger the function again to check if there are other mouse click events waiting to be drawn
