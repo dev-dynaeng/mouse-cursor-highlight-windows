@@ -152,8 +152,11 @@ ProcessKeyStroke(*) {
     if (shouldDisplay) { 
         SetTimer(HideOSDWindow, 0)
         WinShow("ahk_id " TheKeyStrokeOSDHwnd)
-        KeyStrokeOSDWindow := Gui("KeyStrokeOSDWindow")
+        
+        ; Get GUI by its hwnd instead of name
+        KeyStrokeOSDWindow := Gui.GetById(TheKeyStrokeOSDHwnd)
         KeyStrokeOSDWindow["KeyStrokeOSDTextControl"].Text := textToDisplay
+        
         PreviouseDisplayedText := textToDisplay
         SetTimer(HideOSDWindow, SETTINGS["keyStrokeOSD"]["osdDuration"])
     }
