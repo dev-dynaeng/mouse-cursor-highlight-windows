@@ -68,6 +68,7 @@ CreateAnnotationCanvasWindow() {
     global AnnotationCanvasWindowHdc, AnnotationCanvasWindowGraphics
     global LineAnnotationPen, RectangleAnnotationPen
     global CursorSpotlightHwnd, TheKeyStrokeOSDHwnd
+    global CursorSpotlightEnabledOldValue, KeyStrokeOSDEnabledOldValue, SETTINGS
     
     GetDimensionAcrossAllMonitors()
     ; Start gdi+
@@ -215,6 +216,8 @@ ResetVariablesForRectangleDrawing() {
 }
 
 SwitchAnnotationDrawingMode(modeToToggle) { 
+    global CurrentAnnotationMode, SETTINGS
+    global CursorSpotlightEnabledOldValue, KeyStrokeOSDEnabledOldValue
     if (modeToToggle == "LineAnnotation") {
         if (CurrentAnnotationMode == "LineAnnotation") {
             ; If it's already drawing line annotations, we don't need to do anything here.
