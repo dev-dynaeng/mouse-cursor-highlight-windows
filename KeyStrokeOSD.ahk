@@ -13,7 +13,7 @@ CoordMode "Mouse", "Screen"
 global ModifierKeyList := ["Shift", "Alt", "Ctrl", "LWin", "RWin"] 
 
 SetupKeyStrokeOSD() {
-    global SETTINGS, TheKeyStrokeOSDHwnd
+    global SETTINGS, TheKeyStrokeOSDHwnd, KeyStrokeOSDWindow
     SETTINGS := ReadConfigFile("settings.ini") 
     if (SETTINGS["keyStrokeOSD"]["enabled"] == true) {
         InitializeKeyStrokeOSDGUI()
@@ -22,7 +22,7 @@ SetupKeyStrokeOSD() {
 }
 
 InitializeKeyStrokeOSDGUI() {
-    global TheKeyStrokeOSDHwnd
+    global TheKeyStrokeOSDHwnd, KeyStrokeOSDWindow
     KeyStrokeOSDWindow := Gui("+LastFound +AlwaysOnTop -Caption +ToolWindow +E0x20")
     KeyStrokeOSDWindow.BackColor := SETTINGS["keyStrokeOSD"]["osdWindowBackgroundColor"]
     KeyStrokeOSDWindow.SetFont("s" SETTINGS["keyStrokeOSD"]["osdFontSize"], SETTINGS["keyStrokeOSD"]["osdFontFamily"])
@@ -64,6 +64,7 @@ global LastTickCount := 0
 
 ProcessKeyStroke(*) { 
     global PressedModifierKeys, PreviouseDisplayedText, PreviouseHotkeyText, LastTickCount, TheKeyStrokeOSDHwnd
+    global KeyStrokeOSDWindow
     
     ; SETTINGS.keyStrokeOSD.enabled can be changed by other script such as the Annotation.ahk
     if (SETTINGS["keyStrokeOSD"]["enabled"] != true) {
@@ -153,8 +154,8 @@ ProcessKeyStroke(*) {
         SetTimer(HideOSDWindow, 0)
         WinShow("ahk_id " TheKeyStrokeOSDHwnd)
         
-        ; Get GUI by its hwnd using the correct method Gui.FromHwnd
-        KeyStrokeOSDWindow := Gui.FromHwnd(TheKeyStrokeOSDHwnd)
+        ; Use the global GUI object directly
+        global KeyStrokeOSDWindow
         KeyStrokeOSDWindow["KeyStrokeOSDTextControl"].Text := textToDisplay
         
         PreviouseDisplayedText := textToDisplay
