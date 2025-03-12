@@ -15,7 +15,7 @@ global ModifierKeyList := ["Shift", "Alt", "Ctrl", "LWin", "RWin"]
 SetupKeyStrokeOSD() {
     global SETTINGS, TheKeyStrokeOSDHwnd
     SETTINGS := ReadConfigFile("settings.ini") 
-    if (SETTINGS.keyStrokeOSD.enabled == true) {
+    if (SETTINGS["keyStrokeOSD"]["enabled"] == true) {
         InitializeKeyStrokeOSDGUI()
         AddHotkeysForKeyStrokeOSD()
     }
@@ -24,12 +24,12 @@ SetupKeyStrokeOSD() {
 InitializeKeyStrokeOSDGUI() {
     global TheKeyStrokeOSDHwnd
     KeyStrokeOSDWindow := Gui("+LastFound +AlwaysOnTop -Caption +ToolWindow +E0x20")
-    KeyStrokeOSDWindow.BackColor := SETTINGS.keyStrokeOSD.osdWindowBackgroundColor
-    KeyStrokeOSDWindow.SetFont("s" SETTINGS.keyStrokeOSD.osdFontSize, SETTINGS.keyStrokeOSD.osdFontFamily)
-    KeyStrokeOSDWindow.Add("Text", "x0 y0 center vKeyStrokeOSDTextControl c" SETTINGS.keyStrokeOSD.osdFontColor " w" SETTINGS.keyStrokeOSD.osdWindowWidth " h" SETTINGS.keyStrokeOSD.osdWindowHeight)
+    KeyStrokeOSDWindow.BackColor := SETTINGS["keyStrokeOSD"]["osdWindowBackgroundColor"]
+    KeyStrokeOSDWindow.SetFont("s" SETTINGS["keyStrokeOSD"]["osdFontSize"], SETTINGS["keyStrokeOSD"]["osdFontFamily"])
+    KeyStrokeOSDWindow.Add("Text", "x0 y0 center vKeyStrokeOSDTextControl c" SETTINGS["keyStrokeOSD"]["osdFontColor"] " w" SETTINGS["keyStrokeOSD"]["osdWindowWidth"] " h" SETTINGS["keyStrokeOSD"]["osdWindowHeight"])
     TheKeyStrokeOSDHwnd := KeyStrokeOSDWindow.Hwnd
-    WinSetTransparent SETTINGS.keyStrokeOSD.osdWindowOpacity, "ahk_id " TheKeyStrokeOSDHwnd
-    KeyStrokeOSDWindow.Show("x" SETTINGS.keyStrokeOSD.osdWindowPositionX " y" SETTINGS.keyStrokeOSD.osdWindowPositionY " w" SETTINGS.keyStrokeOSD.osdWindowWidth " h" SETTINGS.keyStrokeOSD.osdWindowHeight " NoActivate")
+    WinSetTransparent SETTINGS["keyStrokeOSD"]["osdWindowOpacity"], "ahk_id " TheKeyStrokeOSDHwnd
+    KeyStrokeOSDWindow.Show("x" SETTINGS["keyStrokeOSD"]["osdWindowPositionX"] " y" SETTINGS["keyStrokeOSD"]["osdWindowPositionY"] " w" SETTINGS["keyStrokeOSD"]["osdWindowWidth"] " h" SETTINGS["keyStrokeOSD"]["osdWindowHeight"] " NoActivate")
     WinHide "ahk_id " TheKeyStrokeOSDHwnd 
     Return
 }
@@ -64,7 +64,7 @@ ProcessKeyStroke(*) {
     global PressedModifierKeys, PreviouseDisplayedText, PreviouseHotkeyText, LastTickCount, TheKeyStrokeOSDHwnd
     
     ; SETTINGS.keyStrokeOSD.enabled can be changed by other script such as the Annotation.ahk
-    if (SETTINGS.keyStrokeOSD.enabled != true) {
+    if (SETTINGS["keyStrokeOSD"]["enabled"] != true) {
         Return
     }
 
@@ -127,9 +127,9 @@ ProcessKeyStroke(*) {
     LastTickCount := A_TickCount
 
     ; Check if it's a key chord, eg: Ctrl+K M            
-    if (shouldCheckKeyChord && SETTINGS.keyStrokeOSD.osdKeyChordsRegex) {        
+    if (shouldCheckKeyChord && SETTINGS["keyStrokeOSD"]["osdKeyChordsRegex"]) {        
         possibleKeyChord := PreviouseHotkeyText " " textToDisplay
-        if RegExMatch(possibleKeyChord, SETTINGS.keyStrokeOSD.osdKeyChordsRegex) {
+        if RegExMatch(possibleKeyChord, SETTINGS["keyStrokeOSD"]["osdKeyChordsRegex"]) {
             shouldDisplay := true
             textToDisplay := possibleKeyChord            
         }
@@ -138,8 +138,8 @@ ProcessKeyStroke(*) {
 
     if (!shouldDisplay) {
         ; If it's not a key chord, check if it's a single hotkey key
-        if (SETTINGS.keyStrokeOSD.osdHotkeyRegex) {
-            if (RegExMatch(textToDisplay, SETTINGS.keyStrokeOSD.osdHotkeyRegex)) {
+        if (SETTINGS["keyStrokeOSD"]["osdHotkeyRegex"]) {
+            if (RegExMatch(textToDisplay, SETTINGS["keyStrokeOSD"]["osdHotkeyRegex"])) {
                 shouldDisplay := true
             }
         } else {
@@ -153,7 +153,7 @@ ProcessKeyStroke(*) {
         KeyStrokeOSDWindow := Gui("KeyStrokeOSDWindow")
         KeyStrokeOSDWindow["KeyStrokeOSDTextControl"].Text := textToDisplay
         PreviouseDisplayedText := textToDisplay
-        SetTimer HideOSDWindow, SETTINGS.keyStrokeOSD.osdDuration
+        SetTimer HideOSDWindow, SETTINGS["keyStrokeOSD"]["osdDuration"]
     }
 }
 
