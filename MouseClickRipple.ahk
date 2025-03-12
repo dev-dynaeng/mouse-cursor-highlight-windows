@@ -1,54 +1,57 @@
-#Include ./Utils.ahk
-#SingleInstance, Force
-#NoEnv
+#Requires AutoHotkey v2.0
+#Include "./Utils.ahk"
+#SingleInstance Force
 #MaxThreadsPerHotkey 3
-#installmousehook
+#UseHook
 #MaxHotkeysPerInterval 100
 
-SetBatchLines, -1
-SetWinDelay, -1
-CoordMode, mouse, screen
+SetBatchLines -1
+SetWinDelay -1
+CoordMode "Mouse", "Screen"
 
-ClickEvents := []
-IsStillDrawingRipples := False
-SetupMouseClickRipple()
-{
-    global
+global ClickEvents := []
+global IsStillDrawingRipples := false
+
+SetupMouseClickRipple() {
+    global SETTINGS, ClickRippleBitMapWidth, ClickRippleWindowHwnd, ClickRippleHbm
+    global ClickRippleHdc, ClickRippleGraphics
+    
     SETTINGS := ReadConfigFile("settings.ini") 
     InitializeClickRippleGUI() 
 
-    local ProcessMouseClickFunc := Func("ProcessMouseClick").Bind() 
-    if (SETTINGS.cursorLeftClickRippleEffect.enabled = True) { 
-        Hotkey, ~*LButton, %ProcessMouseClickFunc%
+    if (SETTINGS.cursorLeftClickRippleEffect.enabled = true) { 
+        Hotkey "~*LButton", ProcessMouseClick
     }
-    if (SETTINGS.cursorRightClickRippleEffect.enabled = True) {
-        Hotkey, ~*RButton, %ProcessMouseClickFunc%        
+    if (SETTINGS.cursorRightClickRippleEffect.enabled = true) {
+        Hotkey "~*RButton", ProcessMouseClick
     }
-    if (SETTINGS.cursorMiddleClickRippleEffect.enabled = True) {
-        Hotkey, ~*MButton, %ProcessMouseClickFunc%        
+    if (SETTINGS.cursorMiddleClickRippleEffect.enabled = true) {
+        Hotkey "~*MButton", ProcessMouseClick
     }
 }
 
-InitializeClickRippleGUI(){
-    global
+InitializeClickRippleGUI() {
+    global ClickRippleBitMapWidth, ClickRippleWindowHwnd, ClickRippleHbm
+    global ClickRippleHdc, ClickRippleGraphics
+    
     ; Calculate the width/height of the bitmap we are going to create
     ClickRippleBitMapWidth := Max(SETTINGS.cursorLeftClickRippleEffect.rippleDiameterStart
         , SETTINGS.cursorLeftClickRippleEffect.rippleDiameterEnd
         , SETTINGS.cursorMiddleClickRippleEffect.rippleDiameterStart
         , SETTINGS.cursorMiddleClickRippleEffect.rippleDiameterEnd
         , SETTINGS.cursorRightClickRippleEffect.rippleDiameterStart
-    , SETTINGS.cursorRightClickRippleEffect.rippleDiameterEnd ) + 2
+        , SETTINGS.cursorRightClickRippleEffect.rippleDiameterEnd) + 2
 
     ; Start gdi+    
-    if (!Gdip_Startup())
-    {
-        MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+    if (!Gdip_Startup()) {
+        MsgBox "gdiplus error!`nGdiplus failed to start. Please ensure you have gdiplus on your system", 48
         ExitApp
     }
 
     ; Create a layered window (+E0x80000), and it must be used with UpdateLayeredWindow() to trigger repaint.
-    Gui, MouseClickRippleWindow: +AlwaysOnTop -Caption +ToolWindow +E0x80000 +hwndClickRippleWindowHwnd
-    Gui, MouseClickRippleWindow: Show, NA
+    MouseClickRippleWindow := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x80000")
+    ClickRippleWindowHwnd := MouseClickRippleWindow.Hwnd
+    MouseClickRippleWindow.Show("NA")
 
     ; Create a gdi bitmap that we are going to draw onto.
     ClickRippleHbm := CreateDIBSection(ClickRippleBitMapWidth, ClickRippleBitMapWidth)
@@ -57,7 +60,7 @@ InitializeClickRippleGUI(){
     ClickRippleHdc := CreateCompatibleDC()
 
     ; Select the bitmap into the device context
-    local obm := SelectObject(ClickRippleHdc, ClickRippleHbm)
+    obm := SelectObject(ClickRippleHdc, ClickRippleHbm)
 
     ; Get a pointer to the graphics of the bitmap
     ClickRippleGraphics := Gdip_GraphicsFromHDC(ClickRippleHdc)
@@ -68,34 +71,31 @@ InitializeClickRippleGUI(){
     Return
 }
 
-ProcessMouseClick() {
+ProcessMouseClick(*) {
     global SETTINGS, ClickEvents
-    if (InStr(A_ThisHotkey, "LButton"))
-    {
+    local params
+    
+    if (InStr(A_ThisHotkey, "LButton")) {
         params := SETTINGS.cursorLeftClickRippleEffect 
-    }
-    if (InStr(A_ThisHotkey, "MButton"))
-    {
+    } else if (InStr(A_ThisHotkey, "MButton")) {
         params := SETTINGS.cursorMiddleClickRippleEffect
-    }
-    if (InStr(A_ThisHotkey, "RButton"))
-    { 
+    } else if (InStr(A_ThisHotkey, "RButton")) { 
         params := SETTINGS.cursorRightClickRippleEffect 
     }
 
     ; Add an event to the event array and call the CheckToDrawNextClickEvent function.
-    MouseGetPos rippleMousePositionX, rippleMousePositionY
+    MouseGetPos(&rippleMousePositionX, &rippleMousePositionY)
     params.rippleMousePositionX := rippleMousePositionX
     params.rippleMousePositionY := rippleMousePositionY
     ClickEvents.Push(params)
     CheckToDrawNextClickEvent()
 }
 
-CheckToDrawNextClickEvent()
-{ 
-    global
-    if (IsStillDrawingRipples || ClickEvents.Count() == 0)
-    {
+CheckToDrawNextClickEvent() { 
+    global IsStillDrawingRipples, ClickEvents, ClickRippleBitMapWidth, ClickRippleWindowHwnd
+    global ClickRippleHdc, ClickRippleGraphics
+    
+    if (IsStillDrawingRipples || ClickEvents.Length == 0) {
         Return
     }
 
@@ -103,12 +103,11 @@ CheckToDrawNextClickEvent()
     RippleEventParams := ClickEvents[1]
     ClickEvents.RemoveAt(1)
     
-    if RippleEventParams.playClickSound == True
-    {
-        SoundPlay,  %A_ScriptDir%\MouseClickSound.wav
+    if (RippleEventParams.playClickSound == true) {
+        SoundPlay A_ScriptDir "\MouseClickSound.wav"
     }
 
-    IsStillDrawingRipples := True
+    IsStillDrawingRipples := true
 
     CurrentRippleDiameter := RippleEventParams.rippleDiameterStart
     CurrentRippleAlpha := RippleEventParams.rippleAlphaStart
@@ -119,46 +118,48 @@ CheckToDrawNextClickEvent()
     RippleWindowPositionY := RippleEventParams.rippleMousePositionY - Round(ClickRippleBitMapWidth/2)
 
     AlreadyDrawnRipples := 0    
-    SetTimer, DRAW_RIPPLE, % RippleEventParams.rippleRefreshInterval
-    DRAW_RIPPLE:
-        ; Clear the previous drawing
-        Gdip_GraphicsClear(ClickRippleGraphics, 0)
-        ; Create a pen with ARGB (ARGB = Transparency, red, green, blue) to draw a circle
-        local alphaRGB := CurrentRippleAlpha << 24 | RippleEventParams.rippleColor
-        local pPen := Gdip_CreatePen(alphaRGB, RippleEventParams.rippleLineWidth)
+    SetTimer DRAW_RIPPLE, RippleEventParams.rippleRefreshInterval
+}
 
-        ; Draw a circle into the graphics of the bitmap using the pen created
-        Gdip_DrawEllipse(ClickRippleGraphics
-            , pPen
-            , (ClickRippleBitMapWidth - CurrentRippleDiameter)/2
-            , (ClickRippleBitMapWidth - CurrentRippleDiameter)/2
-            , CurrentRippleDiameter
+DRAW_RIPPLE() {
+    global CurrentRippleDiameter, CurrentRippleAlpha, AlreadyDrawnRipples, RippleEventParams
+    global TotalCountOfRipples, RippleAlphaStep, RippleWindowPositionX, RippleWindowPositionY
+    global ClickRippleBitMapWidth, ClickRippleWindowHwnd, ClickRippleHdc, ClickRippleGraphics
+    global IsStillDrawingRipples
+    
+    ; Clear the previous drawing
+    Gdip_GraphicsClear(ClickRippleGraphics, 0)
+    ; Create a pen with ARGB (ARGB = Transparency, red, green, blue) to draw a circle
+    local alphaRGB := CurrentRippleAlpha << 24 | RippleEventParams.rippleColor
+    local pPen := Gdip_CreatePen(alphaRGB, RippleEventParams.rippleLineWidth)
+
+    ; Draw a circle into the graphics of the bitmap using the pen created
+    Gdip_DrawEllipse(ClickRippleGraphics
+        , pPen
+        , (ClickRippleBitMapWidth - CurrentRippleDiameter)/2
+        , (ClickRippleBitMapWidth - CurrentRippleDiameter)/2
+        , CurrentRippleDiameter
         , CurrentRippleDiameter)
-        Gdip_DeletePen(pPen)        
-        UpdateLayeredWindow(ClickRippleWindowHwnd, ClickRippleHdc, RippleWindowPositionX, RippleWindowPositionY, ClickRippleBitMapWidth, ClickRippleBitMapWidth) 
-        
-        ; Calculate necessary values to prepare for drawing the next circle
-        CurrentRippleAlpha := CurrentRippleAlpha + RippleAlphaStep
-        if (RippleEventParams.rippleDiameterEnd > RippleEventParams.rippleDiameterStart)
-        {
-            CurrentRippleDiameter := CurrentRippleDiameter + Abs(RippleEventParams.rippleDiameterStep)
-        }
-        else
-        {
-            CurrentRippleDiameter := CurrentRippleDiameter - Abs(RippleEventParams.rippleDiameterStep)
-        }
-        AlreadyDrawnRipples++
-        if (AlreadyDrawnRipples >= TotalCountOfRipples)
-        {
-            ; All circles for one click event has been drawn
-            IsStillDrawingRipples := False
-            SetTimer, DRAW_RIPPLE, Off
-            Gdip_GraphicsClear(ClickRippleGraphics, 0)
-            UpdateLayeredWindow(ClickRippleWindowHwnd, ClickRippleHdc, RippleWindowPositionX, RippleWindowPositionY, ClickRippleBitMapWidth, ClickRippleBitMapWidth)
-            ; Trigger the function again to check if there are other mouse click events waiting to be processed
-            CheckToDrawNextClickEvent()
-        }
-    Return
+    Gdip_DeletePen(pPen)        
+    UpdateLayeredWindow(ClickRippleWindowHwnd, ClickRippleHdc, RippleWindowPositionX, RippleWindowPositionY, ClickRippleBitMapWidth, ClickRippleBitMapWidth) 
+    
+    ; Calculate necessary values to prepare for drawing the next circle
+    CurrentRippleAlpha := CurrentRippleAlpha + RippleAlphaStep
+    if (RippleEventParams.rippleDiameterEnd > RippleEventParams.rippleDiameterStart) {
+        CurrentRippleDiameter := CurrentRippleDiameter + Abs(RippleEventParams.rippleDiameterStep)
+    } else {
+        CurrentRippleDiameter := CurrentRippleDiameter - Abs(RippleEventParams.rippleDiameterStep)
+    }
+    AlreadyDrawnRipples++
+    if (AlreadyDrawnRipples >= TotalCountOfRipples) {
+        ; All circles for one click event has been drawn
+        IsStillDrawingRipples := false
+        SetTimer DRAW_RIPPLE, 0
+        Gdip_GraphicsClear(ClickRippleGraphics, 0)
+        UpdateLayeredWindow(ClickRippleWindowHwnd, ClickRippleHdc, RippleWindowPositionX, RippleWindowPositionY, ClickRippleBitMapWidth, ClickRippleBitMapWidth)
+        ; Trigger the function again to check if there are other mouse click events waiting to be processed
+        CheckToDrawNextClickEvent()
+    }
 }
 
 SetupMouseClickRipple()

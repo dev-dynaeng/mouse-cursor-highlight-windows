@@ -1,258 +1,209 @@
-ReadConfigFile(configFileName)
-{
-	result := {}
-	
-	; Read all section names from the INI file
-	IniRead, allSections, %configFileName%, ,
-	
-	; Process the sections
-	allSections := StrSplit(allSections, "`n", "`r")
-	for index, oneSection in allSections 
-	{
-		if (oneSection = "comment")
-		{
-			continue
-		}
-		
-		IniRead, textInOneSection, %configFileName%, %oneSection%
-		items := []
-		lines := StrSplit(textInOneSection, ["`n"], "`r")
-		
-		for notInUse, oneLine in lines
-		{
-			if (SubStr(oneLine, 1, 1) == "#")
-			{
-				;Ignore comments in the ini file
-				continue
-			}
-			keyAndValue := StrSplit(oneLine, ["="], "`r")
-			items.Push(keyAndValue[1])
-			items.Push(keyAndValue[2])			 
-		}
-		
-		for index2, oneItem in items
-		{
-			if(Mod(index2, 2) == 0 )
-			{
-				if (oneItem = "True")
-				{
-					items[index2] := True
-				}
-				else if (oneItem = "False")
-				{
-					items[index2] := False
-				}
-			}
-		}
-		result[oneSection] := Object(items*)
-	}
-	Return result
+#Requires AutoHotkey v2.0
+
+ReadConfigFile(configFileName) {
+    result := Map()
+    allSections := StrSplit(IniRead(configFileName), "`n", "`r")
+    for index, oneSection in allSections {
+        if (oneSection = "comment") {
+            continue
+        }
+        textInOneSection := IniRead(configFileName, oneSection)
+        items := []
+        lines := StrSplit(textInOneSection, ["`n"], "`r")
+        for _, oneLine in lines {
+            if (SubStr(oneLine, 1, 1) == "#") {
+                ;Ignore comments in the ini file
+                continue
+            }
+            keyAndValue := StrSplit(oneLine, ["="], "`r")
+            items.Push(keyAndValue[1])
+            items.Push(keyAndValue[2])            
+        }
+        
+        for index2, oneItem in items {
+            if (Mod(index2, 2) == 0) {
+                if (oneItem = "True") {
+                    items[index2] := true
+                } else if (oneItem = "False") {
+                    items[index2] := false
+                }
+            }
+        }
+        
+        result[oneSection] := Map()
+        for i := 1; i <= items.Length; i += 2 {
+            if (i+1 <= items.Length) {
+                result[oneSection][items[i]] := items[i+1]
+            }
+        }
+    }
+    Return result
 }
 
-Max(num*){
+Max(num*) {
     max := -9223372036854775807
-    Loop % num.MaxIndex()
-        max := (num[A_Index] > max) ? num[A_Index] : max
+    For _, val in num
+        max := (val > max) ? val : max
     Return max
 }
 
-Min(num*){
+Min(num*) {
     min := 9223372036854775807
-    Loop % num.MaxIndex()
-        min := (num[A_Index] < min) ? num[A_Index] : min
+    For _, val in num
+        min := (val < min) ? val : min
     Return min
 }
 
 HasVal(haystack, needle) {
-    if !(IsObject(haystack)) || (haystack.Length() = 0)
+    if (!IsObject(haystack) || haystack.Length = 0)
         return 0
     for index, value in haystack
         if (value = needle)
-        return index
+            return index
     return 0
 }
 
 
 ; *************** The following are functions related gdi plus ***************
-ReleaseDC(hdc, hwnd=0)
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	return DllCall("ReleaseDC", Ptr, hwnd, Ptr, hdc)
+ReleaseDC(hdc, hwnd:=0) {
+    return DllCall("ReleaseDC", "Ptr", hwnd, "Ptr", hdc)
 }
 
-GetDC(hwnd=0)
-{
-	return DllCall("GetDC", A_PtrSize ? "UPtr" : "UInt", hwnd)
+GetDC(hwnd:=0) {
+    return DllCall("GetDC", "Ptr", hwnd)
 }
 
-Gdip_Startup()
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	if !DllCall("GetModuleHandle", "str", "gdiplus", Ptr)
-		DllCall("LoadLibrary", "str", "gdiplus")
-	VarSetCapacity(si, A_PtrSize = 8 ? 24 : 16, 0), si := Chr(1)
-	DllCall("gdiplus\GdiplusStartup", A_PtrSize ? "UPtr*" : "uint*", pToken, Ptr, &si, Ptr, 0)
-	return pToken
+Gdip_Startup() {
+    if !DllCall("GetModuleHandle", "Str", "gdiplus", "Ptr")
+        DllCall("LoadLibrary", "Str", "gdiplus")
+    si := Buffer(24, 0)
+    NumPut("UChar", 1, si, 0)
+    DllCall("gdiplus\GdiplusStartup", "Ptr*", &pToken:=0, "Ptr", si, "Ptr", 0)
+    return pToken
 }
 
-CreateDIBSection(w, h, hdc="", bpp=32, ByRef ppvBits=0)
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	hdc2 := hdc ? hdc : GetDC()
-	VarSetCapacity(bi, 40, 0)
-	
-	NumPut(w, bi, 4, "uint")
-	, NumPut(h, bi, 8, "uint")
-	, NumPut(40, bi, 0, "uint")
-	, NumPut(1, bi, 12, "ushort")
-	, NumPut(0, bi, 16, "uInt")
-	, NumPut(bpp, bi, 14, "ushort")
-	
-	hbm := DllCall("CreateDIBSection"
-					, Ptr, hdc2
-					, Ptr, &bi
-					, "uint", 0
-					, A_PtrSize ? "UPtr*" : "uint*", ppvBits
-					, Ptr, 0
-					, "uint", 0, Ptr)
+CreateDIBSection(w, h, hdc:="", bpp:=32, &ppvBits:=0) {
+    hdc2 := hdc ? hdc : GetDC()
+    bi := Buffer(40, 0)
+    
+    NumPut("UInt", 40, bi, 0)
+    NumPut("UInt", w, bi, 4)
+    NumPut("UInt", h, bi, 8)
+    NumPut("UShort", 1, bi, 12)
+    NumPut("UShort", bpp, bi, 14)
+    NumPut("UInt", 0, bi, 16)
+    
+    hbm := DllCall("CreateDIBSection",
+                   "Ptr", hdc2,
+                   "Ptr", bi,
+                   "UInt", 0,
+                   "Ptr*", &ppvBits:=0,
+                   "Ptr", 0,
+                   "UInt", 0, "Ptr")
 
-	if !hdc
-		ReleaseDC(hdc2)
-	return hbm
+    if !hdc
+        ReleaseDC(hdc2)
+    return hbm
 }
 
-CreateCompatibleDC(hdc=0)
-{
-   return DllCall("CreateCompatibleDC", A_PtrSize ? "UPtr" : "UInt", hdc)
+CreateCompatibleDC(hdc:=0) {
+   return DllCall("CreateCompatibleDC", "Ptr", hdc)
 }
 
-SelectObject(hdc, hgdiobj)
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	return DllCall("SelectObject", Ptr, hdc, Ptr, hgdiobj)
+SelectObject(hdc, hgdiobj) {
+    return DllCall("SelectObject", "Ptr", hdc, "Ptr", hgdiobj)
 }
 
-Gdip_GraphicsFromHDC(hdc)
-{
-    DllCall("gdiplus\GdipCreateFromHDC", A_PtrSize ? "UPtr" : "UInt", hdc, A_PtrSize ? "UPtr*" : "UInt*", pGraphics)
+Gdip_GraphicsFromHDC(hdc) {
+    DllCall("gdiplus\GdipCreateFromHDC", "Ptr", hdc, "Ptr*", &pGraphics:=0)
     return pGraphics
 }
 
-Gdip_SetSmoothingMode(pGraphics, SmoothingMode)
-{
-   return DllCall("gdiplus\GdipSetSmoothingMode", A_PtrSize ? "UPtr" : "UInt", pGraphics, "int", SmoothingMode)
+Gdip_SetSmoothingMode(pGraphics, SmoothingMode) {
+   return DllCall("gdiplus\GdipSetSmoothingMode", "Ptr", pGraphics, "Int", SmoothingMode)
 }
 
-Gdip_GraphicsClear(pGraphics, ARGB=0x00ffffff)
-{
-    return DllCall("gdiplus\GdipGraphicsClear", A_PtrSize ? "UPtr" : "UInt", pGraphics, "int", ARGB)
+Gdip_GraphicsClear(pGraphics, ARGB:=0x00ffffff) {
+    return DllCall("gdiplus\GdipGraphicsClear", "Ptr", pGraphics, "Int", ARGB)
 }
 
-Gdip_CreatePen(ARGB, w)
-{
-   DllCall("gdiplus\GdipCreatePen1", "UInt", ARGB, "float", w, "int", 2, A_PtrSize ? "UPtr*" : "UInt*", pPen)
+Gdip_CreatePen(ARGB, w) {
+   DllCall("gdiplus\GdipCreatePen1", "UInt", ARGB, "Float", w, "Int", 2, "Ptr*", &pPen:=0)
    return pPen
 }
 
-Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h)
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	return DllCall("gdiplus\GdipDrawEllipse", Ptr, pGraphics, Ptr, pPen, "float", x, "float", y, "float", w, "float", h)
+Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h) {
+    return DllCall("gdiplus\GdipDrawEllipse", "Ptr", pGraphics, "Ptr", pPen, "Float", x, "Float", y, "Float", w, "Float", h)
 }
 
-Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2)
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	return DllCall("gdiplus\GdipDrawLine"
-					, Ptr, pGraphics
-					, Ptr, pPen
-					, "float", x1
-					, "float", y1
-					, "float", x2
-					, "float", y2)
+Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2) {
+    return DllCall("gdiplus\GdipDrawLine", "Ptr", pGraphics, "Ptr", pPen, "Float", x1, "Float", y1, "Float", x2, "Float", y2)
 }
 
-
-Gdip_DrawLines(pGraphics, pPen, Points)
-{
-    Ptr := A_PtrSize ? "UPtr" : "UInt"
-    StringSplit, Points, Points, |
-    VarSetCapacity(PointF, 8*Points0) 
-    Loop, %Points0%
-    {
-        StringSplit, Coord, Points%A_Index%, `,
-        NumPut(Coord1, PointF, 8*(A_Index-1), "float"), NumPut(Coord2, PointF, (8*(A_Index-1))+4, "float")
+Gdip_DrawLines(pGraphics, pPen, Points) {
+    PointsArray := StrSplit(Points, "|")
+    PointF := Buffer(8 * PointsArray.Length)
+    
+    For i, coordPair in PointsArray {
+        Coord := StrSplit(coordPair, ",")
+        NumPut("Float", Coord[1], PointF, 8*(i-1))
+        NumPut("Float", Coord[2], PointF, (8*(i-1))+4)
     }
-    return DllCall("gdiplus\GdipDrawLines", Ptr, pGraphics, Ptr, pPen, Ptr, &PointF, "int", Points0)
+    
+    return DllCall("gdiplus\GdipDrawLines", "Ptr", pGraphics, "Ptr", pPen, "Ptr", PointF, "Int", PointsArray.Length)
 }
 
-Gdip_DeletePen(pPen)
-{
-   return DllCall("gdiplus\GdipDeletePen", A_PtrSize ? "UPtr" : "UInt", pPen)
+Gdip_DeletePen(pPen) {
+   return DllCall("gdiplus\GdipDeletePen", "Ptr", pPen)
 }
 
-UpdateLayeredWindow(hwnd, hdc, x="", y="", w="", h="", Alpha=255)
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	if ((x != "") && (y != ""))
-		VarSetCapacity(pt, 8), NumPut(x, pt, 0, "UInt"), NumPut(y, pt, 4, "UInt")
+UpdateLayeredWindow(hwnd, hdc, x:="", y:="", w:="", h:="", Alpha:=255) {
+    if ((x != "") && (y != "")) {
+        pt := Buffer(8)
+        NumPut("UInt", x, pt, 0)
+        NumPut("UInt", y, pt, 4)
+    }
 
-	if (w = "") ||(h = "")
-		WinGetPos,,, w, h, ahk_id %hwnd%
+    if (w = "") || (h = "")
+        WinGetPos(,, &w, &h, "ahk_id " hwnd)
    
-	return DllCall("UpdateLayeredWindow"
-					, Ptr, hwnd
-					, Ptr, 0
-					, Ptr, ((x = "") && (y = "")) ? 0 : &pt
-					, "int64*", w|h<<32
-					, Ptr, hdc
-					, "int64*", 0
-					, "uint", 0
-					, "UInt*", Alpha<<16|1<<24
-					, "uint", 2)
+    return DllCall("UpdateLayeredWindow",
+                   "Ptr", hwnd,
+                   "Ptr", 0,
+                   "Ptr", ((x = "") && (y = "")) ? 0 : pt,
+                   "Int64*", w|h<<32,
+                   "Ptr", hdc,
+                   "Int64*", 0,
+                   "UInt", 0,
+                   "UInt*", Alpha<<16|1<<24,
+                   "UInt", 2)
 }
 
-BitBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, Raster="")
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	return DllCall("gdi32\BitBlt"
-					, Ptr, dDC
-					, "int", dx
-					, "int", dy
-					, "int", dw
-					, "int", dh
-					, Ptr, sDC
-					, "int", sx
-					, "int", sy
-					, "uint", Raster ? Raster : 0x00CC0020)
+BitBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, Raster:="") {
+    return DllCall("gdi32\BitBlt",
+                   "Ptr", dDC,
+                   "Int", dx,
+                   "Int", dy,
+                   "Int", dw,
+                   "Int", dh,
+                   "Ptr", sDC,
+                   "Int", sx,
+                   "Int", sy,
+                   "UInt", Raster ? Raster : 0x00CC0020)
 }
 
-CreateCompatibleBitmap(hdc, w, h)
-{
-	return DllCall("gdi32\CreateCompatibleBitmap", A_PtrSize ? "UPtr" : "UInt", hdc, "int", w, "int", h)
+CreateCompatibleBitmap(hdc, w, h) {
+    return DllCall("gdi32\CreateCompatibleBitmap", "Ptr", hdc, "Int", w, "Int", h)
 }
 
-DeleteDC(hdc)
-{
-   return DllCall("DeleteDC", A_PtrSize ? "UPtr" : "UInt", hdc)
+DeleteDC(hdc) {
+   return DllCall("DeleteDC", "Ptr", hdc)
 }
 
-DeleteObject(hObject)
-{
-   return DllCall("DeleteObject", A_PtrSize ? "UPtr" : "UInt", hObject)
+DeleteObject(hObject) {
+   return DllCall("DeleteObject", "Ptr", hObject)
 }
 
-Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
-{
-	Ptr := A_PtrSize ? "UPtr" : "UInt"
-	
-	return DllCall("gdiplus\GdipDrawRectangle", Ptr, pGraphics, Ptr, pPen, "float", x, "float", y, "float", w, "float", h)
+Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h) {
+    return DllCall("gdiplus\GdipDrawRectangle", "Ptr", pGraphics, "Ptr", pPen, "Float", x, "Float", y, "Float", w, "Float", h)
 }
