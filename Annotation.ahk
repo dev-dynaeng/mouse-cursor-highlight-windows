@@ -3,8 +3,8 @@
 #SingleInstance Force
 #UseHook
 
-SetBatchLines "-1"
-SetWinDelay "-1"
+A_BatchLines := -1
+A_WinDelay := -1
 CoordMode "Mouse", "Screen"
 
 ; Global variables for dimension across all monitors

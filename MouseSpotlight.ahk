@@ -6,8 +6,8 @@
 
 A_MaxHotkeysPerInterval := 100
 
-SetBatchLines "-1"
-SetWinDelay "-1"
+A_BatchLines := -1
+A_WinDelay := -1
 CoordMode "Mouse", "Screen"
 SetWorkingDir A_ScriptDir
 
