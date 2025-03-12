@@ -3,7 +3,8 @@
 #SingleInstance Force
 #MaxThreadsPerHotkey 3
 #UseHook
-#MaxHotkeysPerInterval 100
+
+A_MaxHotkeysPerInterval := 100
 
 SetBatchLines -1
 SetWinDelay -1
