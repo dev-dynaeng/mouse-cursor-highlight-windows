@@ -1,16 +1,23 @@
 ReadConfigFile(configFileName)
 {
 	result := {}
-	IniRead, allSections, %configFileName%, ,  ; Fixed by adding empty section and key parameters
+	
+	; Read all section names from the INI file
+	IniRead, allSections, %configFileName%, ,
+	
+	; Process the sections
 	allSections := StrSplit(allSections, "`n", "`r")
-	for index, oneSection in allSections {
+	for index, oneSection in allSections 
+	{
 		if (oneSection = "comment")
 		{
 			continue
 		}
+		
 		IniRead, textInOneSection, %configFileName%, %oneSection%
 		items := []
 		lines := StrSplit(textInOneSection, ["`n"], "`r")
+		
 		for notInUse, oneLine in lines
 		{
 			if (SubStr(oneLine, 1, 1) == "#")
